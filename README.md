@@ -22,3 +22,6 @@ i.e. `!aika 12:15 suvelan kappeli`
 `!boss BOSS LOCATION`
 
 i.e. `!boss Mewtwo suvelan kappeli`
+
+## Referenced Libraries
+https://discord4j.com/
