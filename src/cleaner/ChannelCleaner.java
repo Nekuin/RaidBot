@@ -23,14 +23,10 @@ public class ChannelCleaner {
 		this.channel = channel;
 		this.cal = Calendar.getInstance();
 		int day = this.cal.get(Calendar.DAY_OF_MONTH);
-		//this.cal.set(Calendar.DAY_OF_MONTH, day+1);
-		this.cal.set(Calendar.HOUR_OF_DAY, 23);
-		this.cal.set(Calendar.MINUTE, 55);
-		this.cal.set(Calendar.SECOND, 00);
-		/*
-		int day = cal.get(Calendar.DAY_OF_MONTH);
 		this.cal.set(Calendar.DAY_OF_MONTH, day+1);
-		*/
+		this.cal.set(Calendar.HOUR_OF_DAY, 00);
+		this.cal.set(Calendar.MINUTE, 01);
+		this.cal.set(Calendar.SECOND, 00);
 		
 		//announce starting a task, guild + channel name and time of the first clean
 		System.out.println(LocalTime.now() + " Cleaning job started for channel: " 
@@ -99,8 +95,8 @@ public class ChannelCleaner {
 			this.timer.cancel();
 			int day = cal.get(Calendar.DAY_OF_MONTH);
 			cal.set(Calendar.DAY_OF_MONTH, day+1);
-			cal.set(Calendar.HOUR_OF_DAY, 23);
-			cal.set(Calendar.MINUTE, 55);
+			cal.set(Calendar.HOUR_OF_DAY, 00);
+			cal.set(Calendar.MINUTE, 01);
 			cal.set(Calendar.SECOND, 00);
 			Timer newt = new Timer();
 			newt.schedule(new CleanTask(newt), cal.getTime());

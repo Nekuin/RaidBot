@@ -21,8 +21,6 @@ public class Cleaner {
 			497128696000544768L,
 			//3-raidit
 			497128710097600512L,
-			//pienet raidit
-			483648554288807946L,
 			//havainnot
 			497129234670813187L,
 			
