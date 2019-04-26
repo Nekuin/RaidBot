@@ -3,12 +3,14 @@ package model;
 import java.util.function.Consumer;
 
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.MessageChannel;
 import discord4j.core.spec.EmbedCreateSpec;
 
 public class Raid {
 	
 	private Message raidMessage;
 	private RaiderList raiderList;
+	private MessageChannel channel;
 	
 	/**
 	 * Get the Discord message
@@ -24,6 +26,22 @@ public class Raid {
 	 */
 	public void setMessage(Message message) {
 		raidMessage = message;
+	}
+	
+	/**
+	 * Get the channel the raid message is in
+	 * @return
+	 */
+	public MessageChannel getChannel() {
+		return channel;
+	}
+	
+	/**
+	 * Set the channel the raid message is in
+	 * @param channel
+	 */
+	public void setChannel(MessageChannel channel) {
+		this.channel = channel;
 	}
 	
 	/**

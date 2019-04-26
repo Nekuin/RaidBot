@@ -1,5 +1,6 @@
 package model;
 
+import discord4j.core.object.entity.Message;
 
 public class RaidFactory {
 	
@@ -8,8 +9,9 @@ public class RaidFactory {
 	 * @param message
 	 * @return
 	 */
-	public static Raid createRaid(String message) {
-		String[] split = message.split(" ");
+	public static Raid createRaid(Message message) {
+		
+		String[] split = message.getContent().get().split(" ");
 		//lenght of 4 (or greater) == /raid TIME BOSS LOCATION (LOCATION)
 		if(split.length >= 4) {
 			RaiderList rl = new RaiderList();
@@ -25,6 +27,7 @@ public class RaidFactory {
 			
 			raid.setRaiderList(rl);
 			rl.setTimestamp(System.currentTimeMillis());
+			raid.setChannel(message.getChannel().block());
 			return raid;
 		}
 		return null;
