@@ -49,15 +49,16 @@ public class ClientEvents {
 		// listen for ReactionAdd events
 		client.getEventDispatcher().on(ReactionAddEvent.class)
 				.filter(event -> channelList.contains(event.getChannelId()))
-				.filter(event -> !event.getUser().block().isBot())
+				.filterWhen(event -> event.getUser().map(user -> !user.isBot()))
 				.filter(event -> templateReactions.get(event.getGuildId().get()).contains(event.getEmoji()))
 				.subscribe(this::onReactionAdd);
 		
 		// listen for ReactionRemove events
 		client.getEventDispatcher().on(ReactionRemoveEvent.class)
-				.filter(event -> channelList.contains(event.getChannelId()))
-				.filter(event -> !event.getUser().block().isBot())
-				.subscribe(this::onReactionRemove);
+			.filter(event -> channelList.contains(event.getChannelId()))
+			.filterWhen(event -> event.getUser().map(user -> !user.isBot()))
+			.filter(event -> templateReactions.get(event.getGuildId().get()).contains(event.getEmoji()))
+			.subscribe(this::onReactionRemove); 
 		
 		// listen for help messages
 		client.getEventDispatcher().on(MessageCreateEvent.class)
@@ -94,23 +95,22 @@ public class ClientEvents {
 	 */
 	private void onRaidMessage(Message msg) {
 		//create Raid object
-		Raid raid = RaidFactory.createRaid(msg.getContent().get());
+		Raid raid = RaidFactory.createRaid(msg);
 		if(raid != null) {
-			//set and send raid message
-			raid.setMessage(msg.getChannel().block()
-					.createEmbed(raid.getEmbedObject().andThen(spec -> {})).block());
-			
-			//remove possible duplicates
-			findAndRemoveDuplicates(raid);
-			
-			//add raid to list
-			raidList.add(raid);
-			System.out.println("Raid created successfully");
-			
-			//add template reactions
-			addTemplateReactions(raid);
-			
-			
+			Mono.just(raid)
+				.map(Raid::getChannel)
+				.subscribe(ch -> {
+					//set Message for raid object and send the EmbedObject to the channel
+					raid.setMessage(ch.createEmbed(raid.getEmbedObject()
+							.andThen(spec -> {}))
+							.block());
+					//add template reactions
+					addTemplateReactions(raid);
+					//remove duplicates if exists
+					findAndRemoveDuplicates(raid);
+					//add raid to raidList
+					raidList.add(raid);
+				});
 		} else {
 			sendRaidHelpMessage(msg);
 		}
@@ -251,7 +251,7 @@ public class ClientEvents {
 				+ "Vaihda bossin nimi raidiin: \n"
 				+ "```" + BotUtils.BOT_PREFIX + "boss BOSS PAIKKA\n"
 				+ "ESIM: " + BotUtils.BOT_PREFIX + "boss mew Suvelan Tammi```\n"
-				+ "Etkö näe botin viestiä? Varmista että linkkien esikatselu on päällä.\n"
+				+ "Etkï¿½ nï¿½e botin viestiï¿½? Varmista ettï¿½ linkkien esikatselu on pï¿½ï¿½llï¿½.\n"
 				+ "Kysymykset ja palautteet voi laittaa Discordissa Nekuin#3936.";
 		//send help message
 		message.getAuthor().get().getPrivateChannel().block()
@@ -259,11 +259,15 @@ public class ClientEvents {
 		message.delete().subscribe();
 	}
 	
+	/**
+	 * Sends a help message with instructions on how to create a raid to the message author
+	 * @param msg
+	 */
 	private void sendRaidHelpMessage(Message msg) {
-		System.out.println("[CREATE RAID] - Problem creating a raid, sending instructions");
+		System.out.println(LocalTime.now() + " [CREATE RAID] - Problem creating a raid, sending instructions");
 		String helpMsg = "Jotain puuttui " + BotUtils.BOT_PREFIX + "raid komennostasi...\n"
 				+ "```" + msg.getContent().get() + "```"
-				+ "Koita näin: \n"
+				+ "Koita nï¿½in: \n"
 				+ "```" + BotUtils.BOT_PREFIX + "raid AIKA BOSS PAIKKA\n"
 						+ BotUtils.BOT_PREFIX + "raid 12:00 mew suvelan tammi``` \n"
 				+ "Something was missing from your " + BotUtils.BOT_PREFIX + "raid command... \n"
@@ -282,7 +286,9 @@ public class ClientEvents {
 		Snowflake guildId = raid.getMessage().getGuild().block().getId();
 		templateReactions.get(guildId).forEach(e -> {
 			//add reactions to msg
-			raid.getMessage().addReaction(e).subscribe();
+			raid.getMessage().addReaction(e).block();
+			//block() instead of subscribe() seems to help getting the reactions in order...
+			//at least on PC version, Android seems to work quite differently
 		});
 	}
 	
@@ -320,7 +326,7 @@ public class ClientEvents {
 		for(Raid r : raidList) {
 			if(r.getLocation().equals(raid.getLocation())) {
 				//duplicate raid location found, check for channel also
-				if(r.getMessage().getChannel().block().equals(raid.getMessage().getChannel().block())) {
+				if(r.getChannel().equals(raid.getChannel())) {
 					duplicate = r;
 					found = true;
 				}

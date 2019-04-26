@@ -57,5 +57,7 @@ public class CleanManager {
 		channelList.add(Snowflake.of(497128696000544768L));
 		//1-2-3 raidit
 		channelList.add(Snowflake.of(497128710097600512L));
+		//havainnot
+		channelList.add(Snowflake.of(497129234670813187L));
 	}
 }
