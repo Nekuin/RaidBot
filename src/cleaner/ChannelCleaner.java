@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
@@ -22,10 +21,9 @@ public class ChannelCleaner {
 	public ChannelCleaner(TextChannel channel) {
 		this.channel = channel;
 		cal = Calendar.getInstance();
-		cal.setTimeZone(TimeZone.getTimeZone("UTC+3"));
 		int day = cal.get(Calendar.DAY_OF_MONTH);
 		cal.set(Calendar.DAY_OF_MONTH, day+1);
-		cal.set(Calendar.HOUR_OF_DAY, 21);
+		cal.set(Calendar.HOUR_OF_DAY, 00);
 		cal.set(Calendar.MINUTE, 01);
 		cal.set(Calendar.SECOND, 00);
 		
@@ -85,7 +83,7 @@ public class ChannelCleaner {
 			timer.cancel();
 			int day = cal.get(Calendar.DAY_OF_MONTH);
 			cal.set(Calendar.DAY_OF_MONTH, day+1);
-			cal.set(Calendar.HOUR_OF_DAY, 21);
+			cal.set(Calendar.HOUR_OF_DAY, 00);
 			cal.set(Calendar.MINUTE, 01);
 			cal.set(Calendar.SECOND, 00);
 			Timer newt = new Timer();

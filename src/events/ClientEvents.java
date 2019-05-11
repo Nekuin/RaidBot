@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import util.*;
 import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -82,6 +83,7 @@ public class ClientEvents {
 			.filter(msg -> msg.getContent()
 					.map(content -> content.startsWith(BotUtils.BOT_PREFIX + "boss")).orElse(false))
 			.subscribe(this::onBossEditMessage);
+
 	}
 	
 
@@ -251,7 +253,7 @@ public class ClientEvents {
 				+ "Vaihda bossin nimi raidiin: \n"
 				+ "```" + BotUtils.BOT_PREFIX + "boss BOSS PAIKKA\n"
 				+ "ESIM: " + BotUtils.BOT_PREFIX + "boss mew Suvelan Tammi```\n"
-				+ "Etkï¿½ nï¿½e botin viestiï¿½? Varmista ettï¿½ linkkien esikatselu on pï¿½ï¿½llï¿½.\n"
+				+ "Etkö näe botin viestiä? Varmista että linkkien esikatselu on päällä.\n"
 				+ "Kysymykset ja palautteet voi laittaa Discordissa Nekuin#3936.";
 		//send help message
 		message.getAuthor().get().getPrivateChannel().block()
@@ -267,7 +269,7 @@ public class ClientEvents {
 		System.out.println(LocalTime.now() + " [CREATE RAID] - Problem creating a raid, sending instructions");
 		String helpMsg = "Jotain puuttui " + BotUtils.BOT_PREFIX + "raid komennostasi...\n"
 				+ "```" + msg.getContent().get() + "```"
-				+ "Koita nï¿½in: \n"
+				+ "Koita näin: \n"
 				+ "```" + BotUtils.BOT_PREFIX + "raid AIKA BOSS PAIKKA\n"
 						+ BotUtils.BOT_PREFIX + "raid 12:00 mew suvelan tammi``` \n"
 				+ "Something was missing from your " + BotUtils.BOT_PREFIX + "raid command... \n"

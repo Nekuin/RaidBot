@@ -13,6 +13,7 @@ public class CleanManager {
 	private DiscordClient client;
 	private List<ChannelCleaner> cleanTasks;
 	private List<Snowflake> channelList;
+	private boolean started = false;
 	
 	public CleanManager(DiscordClient client) {
 		this.client = client;
@@ -20,7 +21,12 @@ public class CleanManager {
 		channelList = new ArrayList<>();
 		setupChannels();
 		client.getEventDispatcher().on(ReadyEvent.class)
-			.subscribe(e -> start());
+			.subscribe(e -> {
+				if(!started) {
+					start();
+					started = true;
+				}
+			});
 	}
 	
 	private void start() {
