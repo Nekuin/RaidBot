@@ -1,5 +1,6 @@
 package cleaner;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,15 @@ public class CleanManager {
 	
 	public void cleanNow() {
 		cleanTasks.forEach(ChannelCleaner::cleanNow);
+	}
+	
+	public void cleanTest(TextChannel channel) {
+		cleanTasks.forEach(c -> {
+			if(c.getChannel() == channel) {
+				System.out.println(LocalTime.now() + " Found test cleaning channel, cleaning");
+				c.cleanNow();
+			}
+		});
 	}
 	
 	private void setupChannels() {

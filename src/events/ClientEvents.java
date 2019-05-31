@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
 public class ClientEvents {
 	
 	private List<Snowflake> channelList;
-	private List<Raid> raidList;
+	private static List<Raid> raidList;
 	private Map<Snowflake, List<ReactionEmoji>> templateReactions;
 	
 	public ClientEvents(DiscordClient client) {
@@ -96,26 +96,33 @@ public class ClientEvents {
 	 * @param msg
 	 */
 	private void onRaidMessage(Message msg) {
+		if(msg.getContent().isPresent()) {
+			System.out.println(LocalTime.now() + " Raid message received: " + msg.getContent().get());
+		}
 		//create Raid object
 		Raid raid = RaidFactory.createRaid(msg);
-		if(raid != null) {
-			Mono.just(raid)
-				.map(Raid::getChannel)
-				.subscribe(ch -> {
-					//set Message for raid object and send the EmbedObject to the channel
-					raid.setMessage(ch.createEmbed(raid.getEmbedObject()
-							.andThen(spec -> {}))
-							.block());
-					//add template reactions
-					addTemplateReactions(raid);
-					//remove duplicates if exists
-					findAndRemoveDuplicates(raid);
-					//add raid to raidList
-					raidList.add(raid);
-				});
-		} else {
-			sendRaidHelpMessage(msg);
+		try {
+			if(raid != null) {
+				//set and send raid message
+				raid.setMessage(msg.getChannel().block()
+						.createEmbed(raid.getEmbedObject().andThen(spec -> {})).block());
+				
+				//remove possible duplicates
+				findAndRemoveDuplicates(raid);
+				
+				//add raid to list
+				raidList.add(raid);
+				
+				//add template reactions
+				addTemplateReactions(raid);
+			} else {
+				sendRaidHelpMessage(msg);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println(LocalTime.now() + " Exception creating a raid: " + e);
 		}
+		
 		//remove users message
 		msg.delete().subscribe();
 	} 
@@ -140,9 +147,14 @@ public class ClientEvents {
 			} else if(emojiName.equals("3_")) {
 				raid.addRaider(name, 3);
 			}
+			try {
+				//edit message
+				raid.getMessage().edit(spec -> spec.setEmbed(raid.getEmbedObject().andThen(s -> {}))).subscribe();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println(LocalTime.now() + " [REACTION ADD] problem editing embed");
+			}
 			
-			//edit message
-			raid.getMessage().edit(spec -> spec.setEmbed(raid.getEmbedObject())).subscribe();
 			
 		}
 	}
@@ -167,9 +179,14 @@ public class ClientEvents {
 			} else if(emojiName.equals("3_")) {
 				raid.removeRaider(name, 3);
 			}
+			try {
+				//edit message
+				raid.getMessage().edit(spec -> spec.setEmbed(raid.getEmbedObject().andThen(s -> {}))).subscribe();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println(LocalTime.now() + " [REACTION REM] problem editing embed");
+			}
 			
-			//edit message
-			raid.getMessage().edit(spec -> spec.setEmbed(raid.getEmbedObject())).subscribe();
 		}
 	}
 	
@@ -393,7 +410,8 @@ public class ClientEvents {
 		channelList.add(Snowflake.of(487710843639824404L));
 	}
 	
-	public void clearRaids() {
+	//static so we can clear the list from the ChannelCleaner instances
+	public static void clearRaids() {
 		System.out.println(LocalTime.now() + " Clearing raid list..");
 		raidList.clear();
 	}

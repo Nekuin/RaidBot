@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.util.Snowflake;
+import events.ClientEvents;
 import reactor.core.publisher.Flux;
 
 public class ChannelCleaner {
@@ -40,26 +41,35 @@ public class ChannelCleaner {
 		System.out.println(LocalTime.now() + " Cleaning channel " + channel.getGuild().block().getName() + "/" + channel.getName());
 		//max 2 weeks old messages
 		Instant i = Instant.ofEpochSecond(Instant.now().getEpochSecond()-1209600);
-		List<Snowflake> messages = channel.getMessagesBefore(Snowflake.of(Instant.now())).take(100)
-			.filter(msg -> msg.getTimestamp().isAfter(i))
-			.filter(msg -> !msg.isPinned())
-			.map(Message::getId)
-			.collect(Collectors.toList())
-			.block();
-		
-		while(messages.size() > 0) {
-			//bulk delete messages
-			channel.bulkDelete(Flux.fromIterable(messages)).subscribe();
-			messages = channel.getMessagesBefore(Snowflake.of(Instant.now())).take(100)
-					.filter(msg -> msg.getTimestamp().isAfter(i))
-					.filter(msg -> !msg.isPinned())
-					.map(Message::getId)
-					.collect(Collectors.toList())
-					.block();
-					
+		try {
+			List<Snowflake> messages = channel.getMessagesBefore(Snowflake.of(Instant.now())).take(100)
+				.filter(msg -> msg.getTimestamp().isAfter(i))
+				.filter(msg -> !msg.isPinned())
+				.map(Message::getId)
+				.collect(Collectors.toList())
+				.block();
+			
+			while(messages.size() > 0) {
+				//bulk delete messages
+				channel.bulkDelete(Flux.fromIterable(messages)).blockLast();
+				messages = channel.getMessagesBefore(Snowflake.of(Instant.now())).take(100)
+						.filter(msg -> msg.getTimestamp().isAfter(i))
+						.filter(msg -> !msg.isPinned())
+						.map(Message::getId)
+						.collect(Collectors.toList())
+						.block();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println(LocalTime.now() + " Exception while cleaning channel " + channel.getName() + " " + e);
 		}
-		
 		System.out.println("finished cleaning in channel: " + channel.getGuild().block().getName() + "/" + channel.getName());
+		//this will be called multiple times because of all the cleaner instances.. minor problem for now
+		ClientEvents.clearRaids();
+	}
+	
+	public TextChannel getChannel() {
+		return channel;
 	}
 	
 	public void printCleaningTime() {
