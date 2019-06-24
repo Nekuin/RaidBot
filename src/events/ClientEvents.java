@@ -27,13 +27,17 @@ import reactor.core.publisher.Mono;
 public class ClientEvents {
 	
 	private List<Snowflake> channelList;
+	private List<Snowflake> persistentChannelList;
+	private List<Raid> persistentRaidList;
 	private static List<Raid> raidList;
 	private Map<Snowflake, List<ReactionEmoji>> templateReactions;
 	
 	public ClientEvents(DiscordClient client) {
 		raidList = new ArrayList<>();
+		persistentRaidList = new ArrayList<>();
 		templateReactions = new HashMap<>();
 		setupRaidChannels();
+		setupPersistentRaidChannels();
 		setupTemplateReactions();
 		subscribeToEvents(client);
 	}
@@ -110,8 +114,15 @@ public class ClientEvents {
 				//remove possible duplicates
 				findAndRemoveDuplicates(raid);
 				
-				//add raid to list
-				raidList.add(raid);
+				//erikoispäivät-communityday kanava
+				if(persistentChannelList.contains(msg.getChannelId())) {
+					System.out.println("Persistent raid");
+					persistentRaidList.add(raid);
+				} else {
+					//add raid to list
+					raidList.add(raid);
+				}
+				
 				
 				//add template reactions
 				addTemplateReactions(raid);
@@ -322,6 +333,12 @@ public class ClientEvents {
 				return raid;
 			}
 		}
+		//persistent raids
+		for(Raid raid : persistentRaidList) {
+			if(raid.getMessage().getId().asLong() == id) {
+				return raid;
+			}
+		}
 		return null;
 	}
 	
@@ -336,24 +353,42 @@ public class ClientEvents {
 				return raid;
 			}
 		}
+		//persistent raids
+		for(Raid raid : persistentRaidList) {
+			if(raid.getLocation().equals(location)) {
+				return raid;
+			}
+		}
 		return null;
 	}
 	
 	private void findAndRemoveDuplicates(Raid raid) {
 		boolean found = false;
 		Raid duplicate = new Raid();
-		for(Raid r : raidList) {
-			if(r.getLocation().equals(raid.getLocation())) {
-				//duplicate raid location found, check for channel also
-				if(r.getChannel().equals(raid.getChannel())) {
+		
+		if(persistentChannelList.contains(raid.getChannel().getId())) {
+			for(Raid r : persistentRaidList) {
+				if(r.getLocation().equals(raid.getLocation())) {
+					//duplicate persistent raid location found, no need to check for channel
 					duplicate = r;
 					found = true;
+				}
+			}
+		} else {
+			for(Raid r : raidList) {
+				if(r.getLocation().equals(raid.getLocation())) {
+					//duplicate raid location found, check for channel also
+					if(r.getChannel().equals(raid.getChannel())) {
+						duplicate = r;
+						found = true;
+					}
 				}
 			}
 		}
 		if(found) {
 			duplicate.getMessage().delete().subscribe();
 			raidList.remove(duplicate);
+			persistentRaidList.remove(duplicate);
 		}
 	}
 	
@@ -394,6 +429,8 @@ public class ClientEvents {
 		channelList = new ArrayList<>();
 		//test servu general
 		channelList.add(Snowflake.of(498168048717398019L));
+		//test hermanni
+		channelList.add(Snowflake.of(498171854742355968L));
 		
 		// espoon keskus pogo kannut:
 		//testatkaa botin toimintaa kannu:
@@ -408,6 +445,23 @@ public class ClientEvents {
 		channelList.add(Snowflake.of(483648699499806720L));
 		//community day ch
 		channelList.add(Snowflake.of(487710843639824404L));
+	}
+	
+	/**
+	 * Add channel IDs to a list which does not get cleared by the cleaner
+	 * these channels need to be included in the normal channelList also
+	 */
+	private void setupPersistentRaidChannels() {
+		persistentChannelList = new ArrayList<>();
+		//test servu hermanni
+		persistentChannelList.add(Snowflake.of(498171854742355968L));
+		
+		//pogo espoon keskus
+		//community day ch
+		persistentChannelList.add(Snowflake.of(487710843639824404L));
+		//ex raids
+		persistentChannelList.add(Snowflake.of(483648699499806720L));
+		
 	}
 	
 	//static so we can clear the list from the ChannelCleaner instances
