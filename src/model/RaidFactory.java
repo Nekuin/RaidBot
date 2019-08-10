@@ -1,5 +1,8 @@
 package model;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 import discord4j.core.object.entity.Message;
 
 public class RaidFactory {
@@ -16,7 +19,24 @@ public class RaidFactory {
 		if(split.length >= 4) {
 			RaiderList rl = new RaiderList();
 			Raid raid = new Raid();
-			rl.setRaidTime(split[1]);
+			String raidTime = split[1];
+			if(raidTime.startsWith("+")) {
+				String minutes = raidTime.substring(1, raidTime.length());
+				try {
+					Long mins = Long.parseLong(minutes);
+					LocalTime newTime = LocalTime.now().plusMinutes(mins);
+					String timestr = newTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+					raidTime = timestr;
+				} catch(NumberFormatException e) {
+					System.out.println(LocalTime.now() + " Error parsing time from: " + raidTime);
+					LocalTime localErrorTime = LocalTime.now();
+					String errorTime = localErrorTime.format(DateTimeFormatter.ofPattern("HH:mm")) + "?";
+					raidTime = errorTime;
+				}
+				
+			}
+			
+			rl.setRaidTime(raidTime);
 			rl.setRaidBoss(split[2]);
 			String raidLoc = "";
 			for(int i = 3; i < split.length; i++) {
